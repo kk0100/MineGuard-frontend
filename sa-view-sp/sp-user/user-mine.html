@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>资料详情</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <!-- 所有的 css & js 资源 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../../static/sa.css">
+    <script src="../../static/js/vue@2.6.10/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.13.0/lib/index.js"></script>
+    <script src="https://unpkg.com/http-vue-loader@1.4.2/src/httpVueLoader.js"></script>
+    <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js"></script>
+    <script src="../../static/js/layer-v3.1.1/layer.js"></script>
+    <script src="../../static/sa.js"></script>
+    <style type="text/css">
+        /* 使长度更长点 */
+        /* .c-panel .c-label{width: 10em;} */
+        .vue-box,.c-panel{background-color: #EEE;}
+        .c-panel .c-title{margin-bottom: 20px;}
+        .c-item .c-label{width: 150px;}
+        .c-item .el-input{width: 300px;}
+        /* 链接样式  */
+        .my-link{position: relative; top: -1px; margin-left: 0.5em;}
+    </style>
+</head>
+<body>
+<div class="vue-box sbot" style="display: none;" :style="'display: block;'">
+    <!-- ------- 内容部分 ------- -->
+    <div class="s-body">
+        <div class="c-panel">
+            <el-form v-if="m">
+                <div style="height: 20px;"></div>
+                <sa-item name="所属煤矿" br>
+                    <el-select v-model="m.mineId" multiple>
+                        <el-option label="请选择" :value="0" disabled></el-option>
+                        <el-option v-for="mine in mineList" :key="mine.id" :label="mine.name" :value="mine.id"></el-option>
+                    </el-select>
+                </sa-item>
+            </el-form>
+        </div>
+    </div>
+    <!-- ------- 底部按钮 ------- -->
+    <div class="s-foot">
+        <el-button type="success" @click="sa.closeCurrIframe()">确定</el-button>
+        <el-button @click="sa.closeCurrIframe()">取消</el-button>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    var app = new Vue({
+        components: {
+            "sa-info": httpVueLoader('../../sa-frame/com/sa-info.vue')
+        },
+        el: '.vue-box',
+        data: {
+            id: parseInt(sa.p('id', 0)),
+            sa: sa,
+            m: null,
+            mineList: [{
+                id: 411481004339,
+                name: "永煤车集煤矿"
+            },
+                {
+                    id: 411481004343,
+                    name: "永煤新桥煤矿"
+                },
+                {
+                    id: 411481004347,
+                    name: "永煤城郊煤矿"
+                },
+                {
+                    id: 411481004350,
+                    name: "永煤顺和煤矿"
+                },
+                {
+                    id: 411481004356,
+                    name: "永煤陈四楼煤矿"
+                },
+                {
+                    id: 411481004903,
+                    name: "神火新庄煤矿"
+                },
+                {
+                    id: 411481004907,
+                    name: "神火刘河煤矿"
+                },
+                {
+                    id: 411481004908,
+                    name: "神火薛湖煤矿"
+                },]
+        },
+        methods: {
+            // ok
+            ok: function(pageNo) {
+                sa.closeCurrIframe();
+            },
+        },
+        created: function() {
+            this.m = {
+                mineId:[]
+            }
+            // if(this.id == 0 || this.id == sa.$sys.getCurrUser().id) {
+            //     sa.ajax('/user/getByCurr', function(res) {
+            //         this.m = res.data;
+            //     }.bind(this));
+            // } else {
+            //     sa.ajax('/user/getById?id=' + this.id, function(res) {
+            //         this.m = res.data;
+            //     }.bind(this));
+            // }
+        }
+    })
+
+</script>
+</body>
+</html>

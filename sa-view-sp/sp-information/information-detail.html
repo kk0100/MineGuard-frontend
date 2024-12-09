@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../../static/sa.css">
+    <link rel="stylesheet" href="../../static/css/layer.css">
+    <script src="../../static/js/vue@2.6.10/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.13.0/lib/index.js"></script>
+    <script src="https://unpkg.com/http-vue-loader@1.4.2/src/httpVueLoader.js"></script>
+    <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.js"></script>
+    <script src="../../static/js/layer-v3.1.1/layer.js"></script>
+    <script src="../../static/sa.js"></script>
+    <title>用户阅读状态</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .read {
+            background-color: #c8e6c9; /* 浅绿色背景 */
+        }
+
+        .unread {
+            background-color: #ffccbc; /* 浅橙色背景 */
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h2 align="center">已读用户</h2>
+    <table id="readUsersTable">
+        <tr>
+            <th>用户名</th>
+        </tr>
+    </table>
+
+    <h2 align="center">未读用户</h2>
+    <table id="unreadUsersTable">
+        <tr>
+            <th>用户名</th>
+        </tr>
+    </table>
+</div>
+
+
+
+<script>
+    var usersReadStatus = [];
+    function displayUsers(readStatus, tableId) {
+        console.log(usersReadStatus)
+        const table = document.getElementById(tableId);
+        const tbody = table.getElementsByTagName('tbody')[0] || document.createElement('tbody');
+
+        // usersReadStatus.find(user => user.read === readStatus).forEach(user => {
+        //     if (user.read === readStatus) {
+        //         const row = document.createElement('tr');
+        //         const cellUsername = document.createElement('td');
+        //
+        //         cellUsername.textContent = user.name;
+        //
+        //         row.appendChild(cellUsername);
+        //         row.classList.add(readStatus ? 'read' : 'unread');
+        //         tbody.appendChild(row);
+        //     }
+        // })
+        usersReadStatus.filter(user => user.read === readStatus).forEach(user => {
+            const row = document.createElement('tr');
+            const cellUsername = document.createElement('td');
+
+            cellUsername.textContent = user.name;
+
+            row.appendChild(cellUsername);
+            row.classList.add(readStatus ? 'read' : 'unread');
+            tbody.appendChild(row);
+        });
+
+        if (tbody.tagName !== 'TBODY') {
+            table.appendChild(tbody);
+        }
+    }
+    function getIsReadList () {
+        var messageId = window.location.search.split('=')[1]
+        sa.ajax('/message/getUserIsReadListByMsgId?messageId=' + messageId, function (res) {
+            usersReadStatus = res.data;
+            displayUsers(true, 'readUsersTable')
+            displayUsers(false, 'unreadUsersTable')
+        }.bind(this))
+
+    }
+
+    getIsReadList();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>管理员登录日志</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <!-- 所有的 css & js 资源 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../../static/sa.css">
+    <link rel="stylesheet" href="../../static/css/layer.css">
+    <script src="../../static/js/vue@2.6.10/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.13.0/lib/index.js"></script>
+    <script src="https://unpkg.com/http-vue-loader@1.4.2/src/httpVueLoader.js"></script>
+    <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.js"></script>
+    <script src="../../static/js/layer-v3.1.1/layer.js"></script>
+    <script src="../../static/sa.js"></script>
+    <style type="text/css">
+        .vue-box{padding: 0; height: 100%; background-color: #FFF;}
+    </style>
+</head>
+<body>
+<div class="vue-box" style="display: none;" :style="'display: block;'">
+    <div class="c-panel">
+        <!-- ------------- 检索参数 ------------- -->
+        <div class="c-title">检索参数</div>
+        <el-form ref="form" :model='p' @submit.native.prevent>
+            <sa-item name="异常类型">
+                <el-select v-model="p.wranType" multiple>
+                    <el-option label="全部" value=""></el-option>
+                    <el-option v-for="wranType in wranTypeList" :key="wranType.id" :label="wranType.name" :value="wranType.id"></el-option>
+                </el-select>
+            </sa-item>
+            <sa-item name="监测类型">
+                <el-select v-model="p.sensorType" multiple>
+                    <el-option label="全部" value=""></el-option>
+                    <el-option v-for="sensorType in sensorTypeList" :key="sensorType.id" :label="sensorType.name" :value="sensorType.id"></el-option>
+                </el-select>
+            </sa-item>
+            <el-button type="primary" icon="el-icon-search" @click="p.pageNo = 1; f5()">查询</el-button>
+        </el-form>
+        <!-- ------------- 快捷按钮 ------------- -->
+<!--        <sa-item type="fast-btn" show="delete,export,reset"></sa-item>-->
+        <sa-item type="fast-btn" show="delete,export"></sa-item>
+        <div style="height: 10px;"></div>
+        <!-- ------------- 数据列表 ------------- -->
+        <el-table class="data-table" ref="data-table" :data="dataList">
+            <sa-td type="selection"></sa-td>
+            <sa-td name="ID" prop="msg_id" width="50px"></sa-td>
+<!--            <sa-td name="企业名称" width="180px">-->
+<!--                <template slot-scope="s">-->
+<!--                    &lt;!&ndash;							<img :src="s.row.spAdminAvatar" @click="sa.showImage(s.row.spAdminAvatar, '400px', '400px')"&ndash;&gt;-->
+<!--                    &lt;!&ndash;								class="td-img" style="vertical-align: middle; margin-right: 5px;" />&ndash;&gt;-->
+<!--                    <el-link type="primary" @click="sa.showIframe('id = ' + s.row.accId + ' 详细信息', '../sp-user/user-info.html?id=' + s.row.accId)">-->
+<!--                        <b style="font-weight: 400;">{{s.row.spUserName}}</b>-->
+<!--                    </el-link>-->
+<!--                </template>-->
+<!--            </sa-td>-->
+            <sa-td name="企业名称" prop="v_name" width="100px"></sa-td>
+            <sa-td name="传感器编号" prop="sensor_id"></sa-td>
+            <sa-td name="安装位置" prop="location"></sa-td>
+            <sa-td name="监测类型" prop="sensor_type"></sa-td>
+            <sa-td name="数据类型" prop="data_type"></sa-td>
+<!--            <sa-td name="异常类型" prop="warn_type"></sa-td>-->
+            <el-table-column label="异常类型">
+                <template slot-scope="s">
+                    <el-tag v-if="s.row.warn_type === '报警'" type="danger" >{{s.row.warn_type}}</el-tag>
+                    <el-tag v-else type="warning">{{s.row.warn_type}}</el-tag>
+                </template>
+            </el-table-column>
+            <sa-td name="监测时间" width="120px" prop="data_time"></sa-td>
+            <sa-td name="最大值" prop="max_val"></sa-td>
+            <sa-td name="最大值时刻" width="120px" prop="max_val_time"></sa-td>
+            <sa-td name="异常开始时刻" width="120px" prop="s_time"></sa-td>
+            <el-table-column label="操作" fixed="right"  width="120px">
+                <template slot-scope="s">
+                    <el-button class="c-btn" type="success" icon="el-icon-view" @click="getUserIsReadListByMsgId(s.row)">浏览状态</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <!-- ------------- 分页 ------------- -->
+        <sa-item type="page" :curr.sync="p.pageNo" :size.sync="p.pageSize" :total="dataCount" @change="f5()"></sa-item>
+    </div>
+</div>
+<script>
+    var app = new Vue({
+        components: {
+            "sa-item": httpVueLoader('../../sa-frame/com/sa-item.vue'),
+            "sa-td": httpVueLoader('../../sa-frame/com/sa-td.vue')
+        },
+        el: '.vue-box',
+        data: {
+            p: { // 查询参数
+                id: '',		// id号
+                accId: sa.p('accId', ''),		// 管理员id
+                wranType: '',		// 本次登录Token
+                sensorType: '',		// 登陆IP
+                pageNo: 1,		// 当前页
+                pageSize: 10,	// 页大小
+                sortType: 0		// 排序方式
+            },
+            dataCount: 0,
+            dataList: [], // 数据集合
+            isReadList: []
+
+        },
+        methods: {
+
+            // 刷新
+            f5: function() {
+                sa.ajax('/message/getMessageList', sa.removeNull(this.p), function(res) {
+                    var dataList = [];
+                    for (let i = 0; i < res.data.length; i++) {
+                        var msg_id = res.data[i].id;
+                        var  content = JSON.parse(res.data[i].content);
+                        content.max_val = (content.max_val!=null)?content.max_val+"("+content.unit+")":''
+                        content.msg_id = msg_id;
+                        content.sensor_id = content.sensor_id.split(content.data_type_code, 2)[1]
+
+                        dataList.push(content);
+                    }
+                    this.dataList = dataList; // 数据
+                    this.dataCount = res.dataCount; // 数据总数
+                    sa.f5TableHeight();		// 刷新表格高度
+                }.bind(this));
+            },
+            // 查看浏览状态
+            getUserIsReadListByMsgId: function(data) {
+                layer.open({
+                    type: 2,
+                    title: '',	// 标题
+                    shadeClose: true,	// 是否点击遮罩关闭
+                    maxmin: false, // 显示最大化按钮
+                    shade: 0.8,		// 遮罩透明度
+                    scrollbar: false,	// 屏蔽掉外层的滚动条
+                    moveOut: true,		// 是否可拖动到外面
+                    area: ['700px', '600px'],	// 大小
+                    content: '../sp-information/information-detail.html?messageId=' + data.msg_id,	// 传值
+                    // 解决拉伸或者最大化的时候，iframe高度不能自适应的问题
+                    // resizing: function(layero) {
+                    //     solveLayerBug(index);
+                    // }
+                });
+                // sa.showIframe('', '../sp-information/information-detail.html?messageId=' + data.msg_id, '700px', '600px');
+
+             },
+            // 删除
+            del: function(data) {
+                sa.confirm('是否删除，此操作不可撤销', function() {
+                    sa.ajax('/SpUserLogin/delete?id=' + data.id, function(res) {
+                        sa.arrayDelete(this.dataList, data);
+                        sa.ok('删除成功');
+                        sa.f5TableHeight();		// 刷新表格高度
+                    }.bind(this))
+                }.bind(this));
+            },
+            // 批量删除
+            deleteByIds: function() {
+                // 获取选中元素的id列表
+                let selection = this.$refs['data-table'].selection;
+                let ids = sa.getArrayField(selection, 'msg_id');
+                if(selection.length == 0) {
+                    return sa.msg('请至少选择一条数据')
+                }
+                // 提交删除
+                sa.confirm('是否批量删除选中数据？此操作不可撤销', function() {
+                    sa.ajax('/message/deleteByIds', {ids: ids.join(',')}, function(res) {
+                        sa.arrayDelete(this.dataList, selection);
+                        sa.ok('删除成功');
+                        sa.f5TableHeight();		// 刷新表格高度
+                    }.bind(this))
+                }.bind(this));
+            },
+        },
+        created: function() {
+            this.f5();
+            sa.onInputEnter();
+        }
+    })
+
+
+</script>
+</body>
+</html>
