@@ -10,4 +10,5 @@
 推送配置页
 ![image](https://github.com/user-attachments/assets/7d6e8ce1-5ee3-48d4-b2f5-eb41f7fdb1b6)
 权限控制页
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/af18857c-01b0-42cd-b614-8a68fa83fc4b)
+
